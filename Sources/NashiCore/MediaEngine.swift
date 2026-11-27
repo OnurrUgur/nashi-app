@@ -113,8 +113,10 @@ public enum MediaEngine {
         let output = try outputURL(input, ext: ext, suffix: " Metadata", options: options)
         var arguments = ["-i", input.path, "-map", "0", "-c", "copy"]
         if removeAll {
-            // Timed data tracks can retain chapter text, GPS, or camera telemetry after tag removal.
-            arguments += ["-map", "-0:d?", "-map_metadata", "-1", "-map_metadata:s", "-1", "-map_chapters", "-1", "-fflags", "+bitexact", "-flags:v", "+bitexact", "-flags:a", "+bitexact"]
+            // Timed data tracks and container attachments (e.g. MKV embedded files/fonts) can retain
+            // telemetry, filenames or embedded payloads after tag removal (and break MKV muxing once
+            // stream metadata like mimetype is cleared).
+            arguments += ["-map", "-0:d?", "-map", "-0:t?", "-map_metadata", "-1", "-map_metadata:s", "-1", "-map_chapters", "-1", "-fflags", "+bitexact", "-flags:v", "+bitexact", "-flags:a", "+bitexact"]
             // Album artwork is stored as an attached video stream rather than
             // a text tag. Remove that metadata image while retaining real video.
             for stream in info.streams where stream.isAttachedPicture {
@@ -135,7 +137,7 @@ public enum MediaEngine {
             guard !field.isEmpty, !field.contains("=") else { throw NashiError.invalidInput("Invalid metadata field: \(key)") }
             if removeAll, specifier.hasPrefix("-metadata:s:"), let index = Int(specifier.dropFirst("-metadata:s:".count)) {
                 // Stream specifiers address output streams; unmapped tracks shift later ones down.
-                let removed = Set(info.streams.filter { $0.kind == "data" || $0.isAttachedPicture }.map(\.index))
+                let removed = Set(info.streams.filter { $0.kind == "data" || $0.kind == "attachment" || $0.isAttachedPicture }.map(\.index))
                 guard !removed.contains(index) else { throw NashiError.invalidInput("Track \(index) is removed with all metadata: \(key)") }
                 specifier = "-metadata:s:\(index - removed.filter { $0 < index }.count)"
             }
