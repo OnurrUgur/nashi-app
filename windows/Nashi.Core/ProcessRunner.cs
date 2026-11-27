@@ -23,9 +23,36 @@ public static class ProcessRunner
             StandardInputEncoding = new UTF8Encoding(false)
         };
         var values = arguments.ToList();
-        if (Path.GetFileNameWithoutExtension(executable).ToLowerInvariant() is "ffmpeg" or "ffprobe" && !values.Contains("-protocol_whitelist"))
-        { start.ArgumentList.Add("-protocol_whitelist"); start.ArgumentList.Add("file,pipe,crypto,data"); }
-        foreach (var value in values) start.ArgumentList.Add(value);
+        var toolName = Path.GetFileNameWithoutExtension(executable).ToLowerInvariant();
+        if (toolName == "ffprobe")
+        {
+            if (!values.Contains("-protocol_whitelist"))
+            { start.ArgumentList.Add("-protocol_whitelist"); start.ArgumentList.Add("file,pipe,crypto,data"); }
+            foreach (var value in values) start.ArgumentList.Add(value);
+        }
+        else if (toolName == "ffmpeg")
+        {
+            var whitelisted = false;
+            for (var index = 0; index < values.Count; index++)
+            {
+                var value = values[index];
+                if (value == "-protocol_whitelist" && index + 1 < values.Count)
+                {
+                    start.ArgumentList.Add(value);
+                    start.ArgumentList.Add(values[++index]);
+                    whitelisted = true;
+                }
+                else if (value == "-i" && index + 1 < values.Count)
+                {
+                    if (!whitelisted) { start.ArgumentList.Add("-protocol_whitelist"); start.ArgumentList.Add("file,pipe,crypto,data"); }
+                    start.ArgumentList.Add(value);
+                    start.ArgumentList.Add(values[++index]);
+                    whitelisted = false;
+                }
+                else start.ArgumentList.Add(value);
+            }
+        }
+        else foreach (var value in values) start.ArgumentList.Add(value);
         using var process = new Process { StartInfo = start };
         if (!process.Start()) throw new IOException("The processing tool could not start.");
         JobObjectTracker.Track(process);

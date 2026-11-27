@@ -7,6 +7,38 @@ public struct ProcessResult: Sendable {
 }
 
 public enum ProcessRunner {
+    private static let protocolWhitelist = ["-protocol_whitelist", "file,pipe,crypto,data"]
+
+    static func withProtocolWhitelist(_ arguments: [String], for toolName: String) -> [String] {
+        if toolName == "ffprobe" {
+            return arguments.contains("-protocol_whitelist") ? arguments : protocolWhitelist + arguments
+        }
+        guard toolName == "ffmpeg" else { return arguments }
+        var result: [String] = []
+        result.reserveCapacity(arguments.count + 4)
+        var index = 0
+        var whitelisted = false
+        while index < arguments.count {
+            let argument = arguments[index]
+            if argument == "-protocol_whitelist", index + 1 < arguments.count {
+                result.append(argument)
+                result.append(arguments[index + 1])
+                whitelisted = true
+                index += 2
+            } else if argument == "-i", index + 1 < arguments.count {
+                if !whitelisted { result.append(contentsOf: protocolWhitelist) }
+                result.append(argument)
+                result.append(arguments[index + 1])
+                whitelisted = false
+                index += 2
+            } else {
+                result.append(argument)
+                index += 1
+            }
+        }
+        return result
+    }
+
     @discardableResult
     public static func run(_ executable: URL, _ arguments: [String], directory: URL? = nil, token: CancellationToken = .init(), environment: [String: String] = [:], onOutput: (@Sendable (Data) -> Void)? = nil) throws -> ProcessResult {
         try token.check()
@@ -14,7 +46,9 @@ public enum ProcessRunner {
         process.executableURL = executable
         // Conversion inputs stay local even if a media container references an
         // external playlist segment. Local pipes/data/encrypted files still work.
-        process.arguments = ["ffmpeg","ffprobe"].contains(executable.lastPathComponent) && !arguments.contains("-protocol_whitelist") ? ["-protocol_whitelist","file,pipe,crypto,data"]+arguments:arguments
+        // ffmpeg applies -protocol_whitelist only to the next -i input, so inject
+        // it before every -i that is not already whitelisted.
+        process.arguments = withProtocolWhitelist(arguments, for: executable.lastPathComponent)
         process.currentDirectoryURL = directory
         process.environment = ProcessInfo.processInfo.environment.merging(environment) { _, new in new }
         let output = Pipe(), errors = Pipe()
