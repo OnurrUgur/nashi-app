@@ -215,6 +215,52 @@ public enum PDFEngine {
         }
     }
 
+    private static func hasReachableSignature(_ catalog:CGPDFDictionaryRef?,token:CancellationToken) throws -> Bool {
+        guard let catalog else { return false }
+        final class Collector {
+            var dictionaries:[CGPDFDictionaryRef]=[]
+            var arrays:[CGPDFArrayRef]=[]
+            func collect(_ object:CGPDFObjectRef) {
+                switch CGPDFObjectGetType(object) {
+                case .dictionary:
+                    var dictionary:CGPDFDictionaryRef?
+                    if CGPDFObjectGetValue(object,.dictionary,&dictionary),let dictionary { dictionaries.append(dictionary) }
+                case .array:
+                    var array:CGPDFArrayRef?
+                    if CGPDFObjectGetValue(object,.array,&array),let array { arrays.append(array) }
+                case .stream:
+                    var stream:CGPDFStreamRef?
+                    if CGPDFObjectGetValue(object,.stream,&stream),let stream,let dictionary=CGPDFStreamGetDictionary(stream) { dictionaries.append(dictionary) }
+                default: break
+                }
+            }
+        }
+        var seenDictionaries=Set<UInt>(),seenArrays=Set<UInt>()
+        let collector=Collector()
+        collector.dictionaries.append(catalog)
+        while !collector.dictionaries.isEmpty || !collector.arrays.isEmpty {
+            try token.check()
+            if let dictionary=collector.dictionaries.popLast() {
+                guard seenDictionaries.insert(unsafeBitCast(dictionary,to:UInt.self)).inserted else { continue }
+                var byteRange:CGPDFObjectRef?
+                if CGPDFDictionaryGetObject(dictionary,"ByteRange",&byteRange) { return true }
+                var type:UnsafePointer<CChar>?
+                if CGPDFDictionaryGetName(dictionary,"Type",&type),let type,String(cString:type)=="Sig" { return true }
+                CGPDFDictionaryApplyFunction(dictionary,{ _,object,pointer in
+                    guard let pointer else { return }
+                    Unmanaged<Collector>.fromOpaque(pointer).takeUnretainedValue().collect(object)
+                },Unmanaged.passUnretained(collector).toOpaque())
+            } else if let array=collector.arrays.popLast() {
+                guard seenArrays.insert(unsafeBitCast(array,to:UInt.self)).inserted else { continue }
+                for index in 0..<CGPDFArrayGetCount(array) {
+                    var child:CGPDFObjectRef?
+                    if CGPDFArrayGetObject(array,index,&child),let child { collector.collect(child) }
+                }
+            }
+        }
+        return false
+    }
+
     private static func withoutSourceMetadata(_ source:PDFDocument,clearAnnotationMetadata:Bool,token:CancellationToken) throws -> PDFDocument {
         // Copying pages does not carry the catalog's AcroForm field registry.
         // Retaining orphan widget appearances would silently break editability.
@@ -228,7 +274,8 @@ public enum PDFEngine {
         if let catalog { _=CGPDFDictionaryGetDictionary(catalog,"Names",&names) }
         let pages=(0..<source.pageCount).compactMap{source.page(at:$0)}
         let feature:String?
-        if hasKey(catalog,"AcroForm") || pages.contains(where:{$0.annotations.contains(where:{$0.type=="Widget"})}) { feature="form fields" }
+        if try hasKey(catalog,"Perms") || hasReachableSignature(catalog,token:token) { feature="digital signatures" }
+        else if hasKey(catalog,"AcroForm") || pages.contains(where:{$0.annotations.contains(where:{$0.type=="Widget"})}) { feature="form fields" }
         // A paperclip (FileAttachment) annotation's file is dropped by the page copy too.
         else if hasKey(names,"EmbeddedFiles") || hasKey(catalog,"AF") || hasKey(catalog,"Collection") || pages.contains(where:{hasKey($0.pageRef?.dictionary,"AF") || $0.annotations.contains(where:{$0.type=="FileAttachment"})}) { feature="embedded files" }
         else if hasKey(catalog,"OCProperties") { feature="optional content layers" }

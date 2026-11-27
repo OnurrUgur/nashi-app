@@ -2564,6 +2564,7 @@
 "THIS PAGES FILE IS TOO LARGE OR IS NOT A REGULAR DOCUMENT FILE." = "BU PAGES DOSYASI ÇOK BÜYÜK YA DA NORMAL BİR BELGE DOSYASI DEĞİL.";
 "THIS PDF CONTAINS ACCESSIBILITY TAGS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "BU PDF'DE ERİŞİLEBİLİRLİK ETİKETLERİ VAR. META VERİ TEMİZLİĞİ BU ÖZELLİKLERİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF CONTAINS CUSTOM PAGE LABELS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "BU PDF'DE ÖZEL SAYFA ETİKETLERİ VAR. META VERİ TEMİZLİĞİ BU ÖZELLİKLERİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
+"THIS PDF CONTAINS DIGITAL SIGNATURES. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "BU PDF'DE DİJİTAL İMZA VAR. META VERİ TEMİZLİĞİ BU ÖZELLİKLERİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF CONTAINS DIGITAL SIGNATURES. THIS PAGE OPERATION CANNOT SAFELY PRESERVE THAT FEATURE. NO COPY WAS EXPORTED." = "BU PDF'DE DİJİTAL İMZA VAR. BU SAYFA İŞLEMİ BU ÖZELLİĞİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF CONTAINS EMBEDDED FILES. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "BU PDF'DE GÖMÜLÜ DOSYALAR VAR. META VERİ TEMİZLİĞİ BU ÖZELLİKLERİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
 "THIS PDF CONTAINS FORM FIELDS. METADATA CLEANUP CANNOT SAFELY PRESERVE THOSE FEATURES. NO COPY WAS EXPORTED." = "BU PDF'DE FORM ALANLARI VAR. META VERİ TEMİZLİĞİ BU ÖZELLİKLERİ GÜVENLE KORUYAMAZ. KOPYA DIŞA AKTARILMADI.";
@@ -2726,6 +2727,7 @@
 "These files have moved or were deleted." = "Bu dosyalar taşınmış veya silinmiş.";
 "This PDF contains accessibility tags. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Bu PDF'de erişilebilirlik etiketleri var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.";
 "This PDF contains custom page labels. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Bu PDF'de özel sayfa etiketleri var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.";
+"This PDF contains digital signatures. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Bu PDF'de dijital imza var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.";
 "This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported." = "Bu PDF'de dijital imza var. Bu sayfa işlemi bu özelliği güvenle koruyamaz. Kopya dışa aktarılmadı.";
 "This PDF contains embedded files. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Bu PDF'de gömülü dosyalar var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.";
 "This PDF contains form fields. Metadata cleanup cannot safely preserve those features. No copy was exported." = "Bu PDF'de form alanları var. Meta veri temizliği bu özellikleri güvenle koruyamaz. Kopya dışa aktarılmadı.";

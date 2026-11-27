@@ -19,6 +19,27 @@ function fieldTree(doc) {
  const fields=form.lookupMaybe(name("Fields"),PDFArray);if(fields)for(const ref of fields.asArray())visit(ref,0);
  return {all,refs};
 }
+function hasReachableSignature(doc) {
+ const seen=new Set(),pending=[doc.catalog];
+ while(pending.length) {
+  check();
+  const raw=pending.pop();
+  const item=raw instanceof PDFRef?doc.context.lookup(raw):raw;
+  if(!item||seen.has(item))continue;
+  if(item instanceof PDFDict) {
+   seen.add(item);
+   if(item.has(name("ByteRange"))||item.lookup(name("Type"))===name("Sig"))return true;
+   for(const [,v]of item.entries())pending.push(v);
+  } else if(item instanceof PDFArray) {
+   seen.add(item);
+   for(const v of item.asArray())pending.push(v);
+  } else if(item instanceof PDFStream) {
+   seen.add(item);
+   pending.push(item.dict);
+  }
+ }
+ return false;
+}
 function preflight(doc,selection,willNamespace) {
  check();
  for(const feature of ["StructTreeRoot","OCProperties","Collection","Perms"])if(doc.catalog.has(name(feature)))unsupported({StructTreeRoot:"accessibility tags",OCProperties:"optional content layers",Collection:"a portfolio collection",Perms:"document signatures"}[feature]);
@@ -34,9 +55,11 @@ function preflight(doc,selection,willNamespace) {
   if(willNamespace&&dr)for(const key of dr.keys())if(!["/Font","/Encoding","/ProcSet"].includes(key.toString()))unsupported("non-font form appearance resources");
   const tree=fieldTree(doc);if(willNamespace)for(const field of tree.all)if(field.has(name('A')))unsupported('form submission or button actions while copying fields');
  }
- // Signature dictionaries may be present outside the form registry.
+ // Signature dictionaries may be present outside the form registry or written inline;
+ // walk reachable objects from the catalog so unreachable incremental objects and empty
+ // unsigned /FT /Sig fields do not trigger false signature refusals.
+ if(hasReachableSignature(doc))unsupported("digital signatures");
  for(const [,obj]of doc.context.enumerateIndirectObjects())if(obj instanceof PDFDict) {
-  if(obj.has(name("ByteRange"))||obj.get(name("FT"))===name("Sig")||obj.get(name("Type"))===name("Sig"))unsupported("digital signatures");
   if(obj.get(name("Type"))===name("OCG")||obj.get(name("Type"))===name("OCMD"))unsupported("optional content layers");
   if(willNamespace&&obj.has(name("AA")))unsupported("form actions that reference field names");
  }

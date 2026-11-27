@@ -80,7 +80,7 @@ public static partial class DocumentEngine
         // macOS's wording (PDFInterop.js), instead of the generic form message below. Signature
         // dictionaries may sit outside the form registry (a /Perms /DocMDP certification), so the whole
         // document is searched.
-        if(tool!="removeMetadata"&&Signed(source))throw new InvalidDataException("This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported.");
+        if(Signed(source))throw new InvalidDataException(tool=="removeMetadata"?"This PDF contains digital signatures. Metadata cleanup cannot safely preserve those features. No copy was exported.":"This PDF contains digital signatures. This page operation cannot safely preserve that feature. No copy was exported.");
         var widgets=source.Pages.Cast<PdfPage>().Any(p=>p.Elements.GetArray("/Annots") is {} annotations&&annotations.Elements.Any(e=>(e is PdfSharp.Pdf.Advanced.PdfReference reference?reference.Value:e) is PdfDictionary annotation&&annotation.Elements.GetName("/Subtype")=="/Widget"));
         var attachments=catalog.GetDictionary("/Names")?.Elements.ContainsKey("/EmbeddedFiles")==true||catalog.ContainsKey("/AF")||catalog.ContainsKey("/Collection");
         // Some generators write an empty /AcroForm; only fields (or an XFA form) are lost.
